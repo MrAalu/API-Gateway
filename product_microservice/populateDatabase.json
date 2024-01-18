@@ -1,0 +1,16 @@
+[
+  {
+    "model": "api.ProductModel",
+    "pk": 1,
+    "fields": {
+      "product_name": "Product 1"
+    }
+  },
+  {
+    "model": "api.ProductModel",
+    "pk": 2,
+    "fields": {
+      "product_name": "Product 2"
+    }
+  }
+]
