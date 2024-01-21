@@ -38,8 +38,10 @@ docker run -d --name kong-gateway --network=kong-net -e "KONG_DATABASE=postgres"
 
 ### Services and Routes
 
-1. Create **SERVICES** using IPV4 Address where KONG is running with the Microservices PORT's. For Eg : If we run Django Microservice using `python3 manage.py runserver 0.0.0.0:9000` than the SERVICES URL will be `http://IPV4_address:9000`
+1. Create **SERVICES** using IPV4 Address where KONG is running with the Microservices PORT's. For Eg : If we run Django Microservice using `python3 manage.py runserver 0.0.0.0:9000` than the SERVICES URL will be `http://IPV4_address:9000`  
+
 *Note : If you want to Run the Microservice on Container than make sure its on the Same Docker network as Kong and You can find the Microservice Container IP using `docker inspect kong-net` where,'kong-net' is the Docker Network where all the KongGateway,Kong DB, Microservices are Running! than the SERVICES URL will be `http://Microservices_Container_IPV4_address:PORT`*
+
 **DONT FORGET TO EXPOSE THE PORT!**
 
 2. Create **ROUTES** for the SERVICE and SELECT the DESIRED HTTP Methods i.e. Get,Post,etc. Access the Django URLs at `http://localhost:8000/django_url/`
