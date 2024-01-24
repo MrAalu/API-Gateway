@@ -47,3 +47,67 @@ docker run -d --name kong-gateway --network=kong-net -e "KONG_DATABASE=postgres"
 2. Create **ROUTES** for the SERVICE and SELECT the DESIRED HTTP Methods i.e. Get,Post,etc. Access the Django URLs at `http://localhost:8000/django_url/`
 
 *Note : If you put path '/route_path_name' on ROUTES than to access the Django URL's you have to goto `http://localhost:8000/route_path_name/django_url/`*
+
+
+### JWT Token/Cookie Authentication Plugin
+
+1. First Install the JWT Token Plugin. `KEY` = `JWT Header 'iss' (issuerClaim)` and  `SIGNING_KEY (SECRET_KEY)` = `JWT SECRET_KEY`.
+2. Can setup the Cookie name i.e. access_token etc.
+3. In Django we can Setup simple-JWT to create a JWT Token with Custom 'ISS' Header and 'JWT SECRET_KEY' where, the 'SECRET_KEY' of Token Creation should match the 'SECRET_KEY' of the KONG GATEWAY.
+4. URL 
+```
+ path("api/token/", CustomTokenObtainPairView.as_view(), 
+```
+5. Settings.py
+```
+ # In Settings.py we have to create our own JWT SECRET_KEY/Signing_Key  
+  SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=15),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": False,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": "KongJWT Credential SecretKey HERE",
+}
+```
+6. Views
+```
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
+
+# Custom Class to modify JWT Token Headers
+class CustomAccessToken(AccessToken):
+    def __init__(self, token, *args, **kwargs):
+        super().__init__(token, *args, **kwargs)
+        self.payload["iss"] = "KongJWT Credential Key HERE"
+
+
+# Custom Login View 
+class CustomTokenObtainPairView(TokenObtainPairView):
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+
+        # Customize the response to set tokens in cookies
+        if "access" and "refresh" in response.data:
+            access_token = response.data["access"]
+            refresh_token = response.data["refresh"]
+
+            # Use your custom access token class
+            custom_access_token = CustomAccessToken(access_token)
+
+            # Get the modified access token
+            modified_access_token = custom_access_token.__str__()
+
+            # Set the access token in a cookie
+            response.set_cookie(
+                "access_token", modified_access_token, httponly=True, secure=True
+            )
+
+            # Set the refresh token in a cookie
+            response.set_cookie(
+                "refresh_token", refresh_token, httponly=True, secure=True
+            )
+
+        return response
+```
+*Note : If we are not using Cookie and if we are using Request Headers for JWT Authentication then, the Token should be created in same way i.e. 'iss' and 'signing_key'*.
